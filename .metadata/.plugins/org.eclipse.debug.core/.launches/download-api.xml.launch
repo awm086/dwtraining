@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.ant.AntLaunchConfigurationType">
+<booleanAttribute key="org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND" value="false"/>
+<booleanAttribute key="org.eclipse.debug.ui.private" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.ant.ui.AntClasspathProvider"/>
+<booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="true"/>
+<mapAttribute key="org.eclipse.ui.externaltools.ATTR_ANT_PROPERTIES">
+<mapEntry key="archiveName" value="demandware-mock.zip"/>
+<mapEntry key="distBaseUrl" value="https://student07-training-na-dw.demandware.net:443/on/demandware.servlet/WFS/Studio/Sites/mock"/>
+<mapEntry key="oldServerApiDirectory" value="/Users/ali/Documents/workspace/.metadata/.plugins/com.demandware.studio.server/server/TrainingDigitalServer"/>
+<mapEntry key="password" value="DiDNYC2016!"/>
+<mapEntry key="serverApiDirectory" value="/Users/ali/Documents/workspace/TrainingDigitalServer/.api"/>
+<mapEntry key="tempArchive" value="/var/folders/s3/05jk4s311fdgc5ld0rs40chw0000gn/T/demandware-api5250500616629433534.zip"/>
+<mapEntry key="userName" value="admin"/>
+</mapAttribute>
+<booleanAttribute key="org.eclipse.ui.externaltools.ATTR_CAPTURE_OUTPUT" value="true"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/Users/ali/eclipse/jee-neon/Eclipse.app/Contents/Eclipse/../../../../../.p2/pool/plugins/com.demandware.studio.server_17.2.0.v201702141349/data/download-api.xml"/>
+<booleanAttribute key="org.eclipse.ui.externaltools.ATTR_SHOW_CONSOLE" value="true"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-v"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="/Users/ali/eclipse/jee-neon/Eclipse.app/Contents/Eclipse/../../../../../.p2/pool/plugins/com.demandware.studio.server_17.2.0.v201702141349/data"/>
+</launchConfiguration>

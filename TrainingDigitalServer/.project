@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>TrainingDigitalServer</name>
+	<comment></comment>
+	<projects>
+		<project>training</project>
+		<project>storefront_core</project>
+		<project>storefront_controllers</project>
+		<project>storefront_pipelines</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>com.demandware.studio.server.uploadBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.demandware.studio.server.serverProjectNature</nature>
+	</natures>
+</projectDescription>

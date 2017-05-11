@@ -1,0 +1,8 @@
+<!--- TEMPLATENAME: HelloWorld.isml --->
+<head>
+<html>
+<title>hello ${pdict.username}</title>
+<body>
+<h1>hello, World!!</h1>
+</body>
+</html>

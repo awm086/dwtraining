@@ -1,0 +1,6 @@
+<h1>Product name: ${pdict.myProduct.name}   found</h1>
+
+<isset name="product" value=${pdict.myProduct} scope="pdict" />
+
+<isinclude template="product/producttile.isml" />
+<isinclude url="${URLUtils.url('Product-IncludeLastVisited')}" />

@@ -1,0 +1,15 @@
+<isdecorate template="product/pt_productdetails.isml"> 
+<isinclude template="util/modules.isml"/>
+<h1>Product name: ${pdict.myProduct.name} </h1>
+
+<isset name="product" value=${pdict.myProduct} scope="pdict" />
+
+<isinclude template="product/producttile.isml" />
+<p> custom </p>
+<isproducttile product="${pdict.myproduct}" />
+<p> remote include</p>
+<isinclude url="${URLUtils.url('Product-IncludeLastVisited')}" />
+
+<p> is comp </p>
+<iscomponent pipeline="Product-IncludeLastVisited"/>
+</isdecorate>

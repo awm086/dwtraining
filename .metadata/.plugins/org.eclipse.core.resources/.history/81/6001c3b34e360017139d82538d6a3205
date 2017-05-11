@@ -1,0 +1,20 @@
+
+require("dw/object/CustomObjMgr");
+var Transaction = require("dw/systemTranactionr");
+
+function subscribe() {
+	// Get data from form.
+	var email = sesssion.forms.newsletter.email.value
+	var fname = sesssion.forms.newsletter.fname.value
+	var lname = sesssion.forms.newsletter.lname.value
+
+	
+	// Create a newsletter custom object
+	// we need to import customObjectManager
+	var co = customObjMgr.creatCustomObject('NewsletterSubscription', email)
+	// store dat to object,
+	co.custom.firstName = fname;
+	co.custom.lastName = lname;
+	
+	return co;
+}

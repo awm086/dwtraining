@@ -1,0 +1,13 @@
+<!--- TEMPLATENAME: HelloWorld.isml --->
+<styles>
+h1 {
+    font-size: 1.75em;
+    margin: 0 0 14px;
+}
+</styles>
+<html>
+<title>hello world</title>
+<body>
+<h1>hello, World!!</h1>
+</body>
+</html>

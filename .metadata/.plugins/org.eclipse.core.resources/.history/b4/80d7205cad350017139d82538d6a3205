@@ -1,0 +1,26 @@
+/**
+ * Description of the Controller and the logic it provides
+ *
+ * @module  controllers/newsletter
+ */
+
+'use strict';
+
+// IMporting a ccd class.
+var ISML = require('dw/template/ISML');
+// Importing a script.
+var guard = require('storefront_controllers/cartridge/scripts/guard');
+
+function start() {
+	
+	ISML.renderTemplate('newsletter/newslettersignup', {
+		ContinueURL : dw.web.URLUtils.https('Newsletter-HandleForm'),
+	});
+}
+
+function HandleForm() {
+	
+}
+exports.Start = guard.ensure([ 'get' ], start);
+//exports.Start = guard.ensure([ 'get', 'https', 'loggedIn' ], start);
+exports.HandleForm = guard.ensure([], handleForm);

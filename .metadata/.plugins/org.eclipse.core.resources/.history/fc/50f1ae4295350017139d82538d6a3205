@@ -1,0 +1,13 @@
+/**
+*   @input ExampleIn : Strin
+*   @output ExampleOut : Number
+*
+*/
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+
+   return PIPELET_NEXT;
+}

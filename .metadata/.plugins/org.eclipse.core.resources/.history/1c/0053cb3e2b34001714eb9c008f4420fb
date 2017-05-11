@@ -1,0 +1,28 @@
+/**
+* Description of the Controller and the logic it provides
+*
+* @module  controllers/HelloWorld
+*/
+
+'use strict';
+
+// IMporting a ccd class.
+var ISML = require('dw/template/ISML');
+// Importing a script.
+var guard = require('storefront_controllers/cartridge/scripts/guard');
+var productMgr = require('dw/catalog/ProductMgr');
+
+function start() {
+	var productId = request.httpParamterMap.pid;
+	var product = productMgr.getProduct(productId);
+	// check documentaion on help content via eclipse.
+	ISML.renderTemplate('productFound.isml', 
+			{username: "ali"}
+	);
+	
+	ISML.renderTemplate('productFound.isml', 
+			{username: "ali"}
+	);
+}
+
+exports.Start = guard.ensure([ 'get'], start);

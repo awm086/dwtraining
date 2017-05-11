@@ -1,0 +1,58 @@
+<iscomment>
+
+<isset name="sessionVar" value="${1}" scope="session"/>
+</iscomment>
+
+<isset name="sessionVar" value="${session.custom.sessionVar+1}" 
+	scope = "session"/>
+ 
+ <iscomment><isremove name="sessionVar" scope="session"></iscomment>
+<h1>sessionVar: ${session.custom.sessionVar}<br/>
+<h1>sessionVar: ${pdict.CurrentSession.custom.sessionVar}<br/>
+<isset name="requestVar" value="Craig" scope = "request"/>
+
+requestVar: ${request.custom.requestVar}<br/>
+requestVar: ${pdict.CurrentRequest.custom.requestVar}<br/>
+<isset name="requestNumVar" value="${request.custom.requestNumVar + 1}"
+	 scope = "request"/>
+
+requestNum: ${request.custom.requestNumVar}<br/>
+
+<isset name="pageVar" value="10" scope = "page"/>
+
+pageVar: ${pageVar}<br/>
+ <iscomment>
+<isset name="sessionString" value="1"   
+ 	scope = "session"/>
+</iscomment>
+ 
+<isset name="sessionString" value="${session.custom.sessionString+1}"
+ 	scope = "session"/>
+  
+Session String: ${session.custom.sessionString}
+
+<isset name="sessionStringNull" value="${session.custom.sessionStringNull+1}"
+ 	scope = "session"/>
+ <br>Null Session String:  ${session.custom.sessionStringNull}
+ 
+ <isremove name="sessionString2Null" scope="session">
+ 
+ <isset name="sessionString2Null" value="${session.custom.sessionString2Null+'Craig'}"
+ 	scope = "session"/>
+ <br>Null Session2 String:  ${session.custom.sessionString2Null}
+ <br/>
+ Pdict null variable access:${pdict.AnotherNewValue} <br/>
+ 
+ <isset name="ScopeTest" value="this scope is the default" /> 
+ Session Scope:		${session.custom.ScopeTest} <br/>
+ pdict Scope:	${pdict.ScopeTest} <br/>
+ Request Scope:	${request.custom.ScopeTest} <br/>
+ Page Scope:	${ScopeTest} <br/>	
+ 
+ Global Scope Access<br/>	
+  
+ Global Value: ${dw.system.System.getPreferences().getCustom()["CraigGlobal"]}<br/>	
+ 
+ Site Scope Access<br/>	
+ Site Value: ${dw.system.Site.getCurrent().getPreferences().getCustom()["CraigSite"]}<br/>	
+ 

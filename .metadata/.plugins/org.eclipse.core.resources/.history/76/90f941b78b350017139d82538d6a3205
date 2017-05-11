@@ -1,0 +1,16 @@
+<isdecorate template="product/pt_productdetails.isml"> 
+<isinclude template="util/modules.isml"/>
+<h1>Product name: ${pdict.myProduct.name} </h1>
+
+<isset name="product" value=${pdict.myProduct} scope="pdict" />
+<!-- params key, resource and default msg -->
+${dw.web.Resource.msg('include.local', 'example')}
+<isinclude template="product/producttile.isml" />
+
+${dw.web.Resource.msg('include.remote', 'example', 'key is not found')}
+
+<isproducttile product="${pdict.myProduct}" showpricing = ${true} />
+<isinclude url="${URLUtils.url('Product-IncludeLastVisited')}" />
+
+<iscomponent pipeline="Product-IncludeLastVisited"/>
+</isdecorate>

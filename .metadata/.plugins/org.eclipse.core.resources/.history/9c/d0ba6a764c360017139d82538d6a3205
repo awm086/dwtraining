@@ -1,0 +1,13 @@
+
+
+function subscribe() {
+	// Get data from form.
+	var email = sesssion.forms.newsletter.email.value
+	var fname = sesssion.forms.newsletter.fname.value
+	var lname = sesssion.forms.newsletter.lname.value
+
+	var email = sesssion.forms.newsletter.email.value
+
+	// Create a newsletter custom object
+	// store dat to obkect,
+}

@@ -1,0 +1,4 @@
+# labels
+include.local = local include (from bundle)
+include.remote = Remote Include (from bundle)
+product.found = Product {0} has been Found

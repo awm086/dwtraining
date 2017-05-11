@@ -1,0 +1,5 @@
+<!--- TEMPLATENAME: dscript.isml --->
+<isscript>
+	var RCC= dw.customer.CustomerMgr.registeredCustomerCount;
+ </isscript>
+ ${RCC}

@@ -1,0 +1,6 @@
+<!--- TEMPLATENAME: dscript.isml --->
+<isscript>
+	var RCC= ???
+ </isscript>
+ // page scope
+ ${RCC}

@@ -1,0 +1,342 @@
+<html>
+<head>
+	<title>WebDAV UI</title>
+</head>
+<body>
+	<form action="${URLUtils.https('TestWebDAV-Start')}">
+	<a href="${URLUtils.https('TestWebDAV-Start')}">WebDAV Tester</a><br/>
+	<br/>
+	Remote Folder URL: <input type="text" name="RemoteFolderURL" value="${!empty(pdict.CurrentHttpParameterMap.RemoteFolderURL.stringValue)?pdict.CurrentHttpParameterMap.RemoteFolderURL.stringValue:""}"/> (e.g. "https://www.myserver.invalid/folder/")<br/>
+	Remote File: <input type="text" name="RemoteFile" value="${!empty(pdict.CurrentHttpParameterMap.RemoteFile.stringValue)?pdict.CurrentHttpParameterMap.RemoteFile.stringValue:""}"/> (e.g. "", "Catalog_2009-06-23_14-12-56.xml")<br/>
+	New Remote File: <input type="text" name="NewRemoteFile" value="${!empty(pdict.CurrentHttpParameterMap.NewRemoteFile.stringValue)?pdict.CurrentHttpParameterMap.NewRemoteFile.stringValue:""}"/> (e.g. "Catalog_2009-06-23_14-12-56.xml")<br/>
+	Remote Login: <input type="text" name="RemoteLogin" value="${!empty(pdict.CurrentHttpParameterMap.RemoteLogin.stringValue)?pdict.CurrentHttpParameterMap.RemoteLogin.stringValue:""}"/> (e.g. "dwserver")<br/>
+	Remote Password: <input type="text" name="RemotePassword" value="${!empty(pdict.CurrentHttpParameterMap.RemotePassword.stringValue)?pdict.CurrentHttpParameterMap.RemotePassword.stringValue:""}"/> (e.g. "topsecret")<br/>
+	Local File: <input type="text" name="File" value="${!empty(pdict.CurrentHttpParameterMap.File.stringValue)?pdict.CurrentHttpParameterMap.File.stringValue:""}"/> (e.g. "catalog/Catalog_2009-06-23_14-12-56.xml")<br/>
+	<input type="submit" name="Action" value="PROPFIND"/>
+	<input type="submit" name="Action" value="GET"/>
+	<input type="submit" name="Action" value="PUT"/>
+	<input type="submit" name="Action" value="MOVE"/>
+	<input type="submit" name="Action" value="DEL"/><br/>
+	<br/>
+	Local Folder: <input type="text" name="TempFolder" value="${!empty(pdict.CurrentHttpParameterMap.TempFolder.stringValue)?pdict.CurrentHttpParameterMap.TempFolder.stringValue:""}"/> (e.g. "", "catalog")<br/>
+	<input type="submit" name="Action" value="LIST"/><br/>
+	<br/>
+	
+	<isscript>
+		importPackage( dw.io );
+		importPackage( dw.net );
+		importPackage( dw.util );
+	
+		var action = pdict.CurrentHttpParameterMap.Action.stringValue;
+		var remoteFolderURL = pdict.CurrentHttpParameterMap.RemoteFolderURL.stringValue;
+		var remoteFile = pdict.CurrentHttpParameterMap.RemoteFile.stringValue;
+		var newRemoteFile = pdict.CurrentHttpParameterMap.NewRemoteFile.stringValue;
+		var remoteLogin = pdict.CurrentHttpParameterMap.RemoteLogin.stringValue;
+		var remotePassword = pdict.CurrentHttpParameterMap.RemotePassword.stringValue;
+		var file = pdict.CurrentHttpParameterMap.File.stringValue;
+		var tempFolder = pdict.CurrentHttpParameterMap.TempFolder.stringValue;
+		
+		if ( action == "PROPFIND" )
+		{
+			propfind( remoteFolderURL, remoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "GET" )
+		{
+			get( remoteFolderURL, remoteFile, remoteLogin, remotePassword, file );
+		}
+		else if (action == "PUT" )
+		{
+			put( file, remoteFolderURL, remoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "MOVE" )
+		{
+			move( remoteFolderURL, remoteFile, newRemoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "DEL" )
+		{
+			del( remoteFolderURL, remoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "LIST" )
+		{
+			list( tempFolder );
+		}
+
+		function propfind( remoteFolderURL, remoteFile, remoteLogin, remotePassword)
+		{
+			var webDAVClient;
+	
+			if ( !empty( remoteLogin ) && !empty( remotePassword ) )
+			{
+				// use authentication
+				out.print( "Executing WebDAVClient( \"" + remoteFolderURL + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL, remoteLogin, remotePassword );
+			}
+			else
+			{
+				// no authentication
+				out.print( "Executing new WebDAVClient( \"" + remoteFolderURL + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL );
+			}
+
+			var files;
+			
+			try
+			{
+				// remoteFolderURL already contains full reference to folder, if there is no path to append, we pass ""
+				// The default depth of 1 makes propfind return the current folder AND files in that folder.
+				out.print( "Executing webDAVClient.propfind( \"" + ( remoteFile != null ? remoteFile : "" ) + "\" )<br/>" );
+				files = webDAVClient.propfind( ( remoteFile != null ) ? remoteFile : "" );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while propfind: " + ex + "<br/>" );		
+				return;
+			}
+			
+			if ( !webDAVClient.succeeded() )
+			{
+				out.print( "Error while propfind: " + webDAVClient.statusCode + " " + webDAVClient.statusText + "<br/>");		
+				return;
+			}
+
+			out.print( "Executing webDAVClient.close()<br/>" );
+			webDAVClient.close();
+
+			out.print( "<br/>" );
+			out.print( "name, isDirectory, size, path, creationDate, lastModified, contentType<br/>" );
+			
+			for each ( var file in files )
+			{
+				out.print(
+					file.name + ", " +
+					file.directory + ", " +
+					file.size + ", " +
+					file.path + ", " +
+					file.creationDate + ", " +
+					file.lastModified() + ", " +
+					file.contentType + "<br/>" );
+			}
+			
+			out.print( "done<br/>" );
+		}
+
+		function get( remoteFolderURL, remoteFile, remoteLogin, remotePassword, file )
+		{
+			var webDAVClient;
+	
+			if ( !empty( remoteLogin ) && !empty( remotePassword ) )
+			{
+				// use authentication
+				out.print( "Executing WebDAVClient( \"" + remoteFolderURL + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL, remoteLogin, remotePassword );
+			}
+			else
+			{
+				// no authentication
+				out.print( "Executing new WebDAVClient( \"" + remoteFolderURL + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL );
+			}
+			
+			// download file
+			var localFile = new File( File.IMPEX + File.SEPARATOR + "src" + File.SEPARATOR + file );
+		
+			try
+			{
+				out.print( "Executing webDAVClient.getBinary( \"" + remoteFile + "\", " + localFile.fullPath + ", " + WebDAVClient.MAX_GET_FILE_SIZE + "\" )<br/>" );
+				webDAVClient.getBinary( remoteFile, localFile, WebDAVClient.MAX_GET_FILE_SIZE );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while get: " + ex + "<br/>" );		
+				return;
+			}
+
+			if ( !webDAVClient.succeeded() )
+			{
+				out.print( "Error while get: " + webDAVClient.statusCode + " " + webDAVClient.statusText + "<br/>");		
+				return;
+			}
+			
+			out.print( "Executing webDAVClient.close()<br/>" );
+			webDAVClient.close();
+			
+			out.print( "done<br/>" );
+		}
+
+		function put( file, remoteFolderURL, remoteFile, remoteLogin, remotePassword )
+		{
+			var localFile = new File( File.IMPEX + File.SEPARATOR + "src" + File.SEPARATOR + file );
+		
+			if ( !localFile.exists() )
+			{
+		    	out.print( "File " + localFile.fullPath + " does not exist.<br/>" );
+		    	return;
+			}
+
+			var webDAVClient;
+	
+			if ( !empty( remoteLogin ) && !empty( remotePassword ) )
+			{
+				// use authentication
+				out.print( "Executing WebDAVClient( \"" + remoteFolderURL + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL, remoteLogin, remotePassword );
+			}
+			else
+			{
+				// no authentication
+				out.print( "Executing new WebDAVClient( \"" + remoteFolderURL + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL );
+			}
+
+			try
+			{
+				out.print( "Executing webDAVClient.put( \"" + remoteFile + "\", " + localFile.fullPath + " )<br/>" );
+				webDAVClient.put( remoteFile, localFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while put: " + ex + "<br/>" );		
+				return;
+			}
+			
+			if ( !webDAVClient.succeeded() )
+			{
+				out.print( "Error while put: " + webDAVClient.statusCode + " " + webDAVClient.statusText + "<br/>");		
+				return;
+			}
+		
+			out.print( "Executing webDAVClient.close()<br/>" );
+			webDAVClient.close();
+			
+			out.print( "done<br/>" );
+		}
+
+		function move( remoteFolderURL, remoteFile, newRemoteFile, remoteLogin, remotePassword )
+		{
+			var webDAVClient;
+	
+			if ( !empty( remoteLogin ) && !empty( remotePassword ) )
+			{
+				// use authentication
+				out.print( "Executing WebDAVClient( \"" + remoteFolderURL + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL, remoteLogin, remotePassword );
+			}
+			else
+			{
+				// no authentication
+				out.print( "Executing new WebDAVClient( \"" + remoteFolderURL + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL );
+			}
+
+			try
+			{
+				out.print( "Executing webDAVClient.move( \"" + remoteFile + "\", \"" + newRemoteFile + "\" )<br/>" );
+				webDAVClient.move( remoteFile, newRemoteFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while moving: " + ex + "<br/>" );		
+				return;
+			}
+			
+			if ( !webDAVClient.succeeded() )
+			{
+				out.print( "Error while moving: " + webDAVClient.statusCode + " " + webDAVClient.statusText + "<br/>");		
+				return;
+			}
+
+			out.print( "Executing webDAVClient.close()<br/>" );
+			webDAVClient.close();
+
+			out.print( "done<br/>" );
+		}
+		
+		function del( remoteFolderURL, remoteFile, remoteLogin, remotePassword )
+		{
+			var webDAVClient;
+	
+			if ( !empty( remoteLogin ) && !empty( remotePassword ) )
+			{
+				// use authentication
+				out.print( "Executing WebDAVClient( \"" + remoteFolderURL + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL, remoteLogin, remotePassword );
+			}
+			else
+			{
+				// no authentication
+				out.print( "Executing new WebDAVClient( \"" + remoteFolderURL + "\" )<br/>" );
+				webDAVClient = new WebDAVClient( remoteFolderURL );
+			}
+
+			try
+			{
+				out.print( "Executing webDAVClient.del( \"" + remoteFile + "\" )<br/>" );
+				webDAVClient.del( remoteFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while del: " + ex + "<br/>" );		
+				return;
+			}
+			
+			if ( !webDAVClient.succeeded() )
+			{
+				out.print( "Error while del: " + webDAVClient.statusCode + " " + webDAVClient.statusText + "<br/>");		
+				return;
+			}
+
+			out.print( "Executing webDAVClient.close()<br/>" );
+			webDAVClient.close();
+
+			out.print( "done<br/>" );
+		}
+		
+		function list( tempFolder )
+		{
+			var folder;
+			
+			if ( !empty( tempFolder ) )
+			{
+				folder = new File( File.IMPEX + File.SEPARATOR + "src" + File.SEPARATOR + tempFolder );
+			}
+			else
+			{
+				folder = new File( File.IMPEX + File.SEPARATOR + "src" );
+			}
+		
+			if ( !folder.exists() )
+			{
+				out.print( "Folder " + folder.fullPath + " does not exist.<br/>" );
+				return;
+			} 
+			
+			if ( !folder.directory )
+			{
+				out.print( "Folder " + folder.fullPath + " is not of type directory.<br/>" );
+				return;
+			} 
+			
+			out.print( "name, fullPath, rootDirectoryType, file, directory, lastModified, length<br/>" );
+			
+			for each ( var file in folder.listFiles() )
+			{
+				var calendar : Calendar = new Calendar( new Date( file.lastModified() ) );
+				calendar.timeZone = "GMT";
+			
+				out.print(
+					file.name + ", " +
+					file.fullPath + ", " +
+					file.rootDirectoryType + ", " +
+					file.file + ", " +
+					file.directory + ", " +
+					StringUtils.formatCalendar( calendar, "yyyy-MM-dd HH:mm:ss" ) + " GMT, " +
+					file.length() + "<br/>" );
+			}
+		
+			out.print( "done<br/>" );
+		}
+	</isscript>
+	
+	</form>	
+</body>
+</html>

@@ -1,0 +1,32 @@
+Task: Create Job and pipeline that (exports and) deletes instances of custom object "NewsletterSubscription"
+
+Review:
+
+https://documentation.demandware.com/display/DOCAPI2115/dw.object.CustomObjectMgr
+https://documentation.demandware.com/display/DOCAPI2115/Pipelet+SearchCustomObject
+https://documentation.demandware.com/display/DOCAPI2115/Pipelet+ExportCustomObjects
+
+1. Add custom attribute "exported" type Boolean to CustomObject "NewsletterSubscription"
+
+2. Create a new pipeline
+
+* Call Mode has to be "Private" as pipeline should not be accessible in the Storefront
+* Add transactional script note where "exported" is set to "true" for custom object "NewsletterSubscription" older than X
+* Use pipelet "SearchCustomObject" to get an Iterator for export
+* Use pipelet "ExportCustomObjects" to export custom object "NewsletterSubscription"
+* Add transactional script note and use "CustomObjectMgr.remove" to delete all exported custom objects
+
+3. Create a new job and execute
+
+* Add new job in BM > Administration > Operations > Job Schedules
+* Ensure that "Pipeline" and "Startnode" is set according to pipeline created in UX Studio
+* Ensure that cartridge is in cartridge path for "Business Manager - Site" and "Site"
+* Execute the job by clicking "Run"
+* Doublecheck BM > Administration > Operations > Job History
+
+4. Check exported file https://instance/on/demandware.servlet/webdav/Sites/Impex/src/subfolder/exportfile.xml
+
+
+
+
+add notification steps / success + error

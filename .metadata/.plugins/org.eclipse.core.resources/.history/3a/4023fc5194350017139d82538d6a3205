@@ -1,0 +1,13 @@
+/**
+*   @input ExampleIn : String This is a sample comment.
+*   @output ExampleOut : Number
+*
+*/
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+
+   return PIPELET_NEXT;
+}

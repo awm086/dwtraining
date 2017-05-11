@@ -1,0 +1,21 @@
+/**
+*  @input ProductId : String
+*  @output Product : Object
+*
+*/
+
+importClass('dw.catalog.ProductMgr');
+function execute( args : PipelineDictionary ) : Number
+{
+	var pid = args.ProductId;
+    var product = ProductMgr.getProduct(pid);
+	
+	if (product == null) 
+	{
+		return PIPELET_ERROR;
+	}
+
+	
+	args.product = product;
+   return PIPELET_NEXT;
+}

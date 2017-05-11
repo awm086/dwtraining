@@ -1,0 +1,25 @@
+/**
+
+*  @input ProductId : String
+*  @output Product : Object
+*
+*/
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+    // require scripts or system libs here 
+    // var logger = require('dw/system/Logger');
+
+    // read pipeline dictionary input parameter
+    // ... = args.ExampleIn;
+
+    // insert business logic here
+
+    // write pipeline dictionary output parameter
+
+    // args.ExampleOut = ...
+
+   return PIPELET_NEXT;
+}

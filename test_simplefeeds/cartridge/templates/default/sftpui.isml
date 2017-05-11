@@ -1,0 +1,610 @@
+<html>
+<head>
+	<title>SFTP UI</title>
+</head>
+<body>
+	<form action="${URLUtils.https('TestSFTP-Start')}">
+	<a href="${URLUtils.https('TestSFTP-Start')}">SFTP Tester</a><br/>
+	<br/>
+	Remote Folder URL: <input type="text" name="RemoteFolderURL" value="${!empty(pdict.CurrentHttpParameterMap.RemoteFolderURL.stringValue)?pdict.CurrentHttpParameterMap.RemoteFolderURL.stringValue:""}"/> (e.g. "sftp://sftp.myserver.invalid/folder/")<br/>
+	Remote File: <input type="text" name="RemoteFile" value="${!empty(pdict.CurrentHttpParameterMap.RemoteFile.stringValue)?pdict.CurrentHttpParameterMap.RemoteFile.stringValue:""}"/> (e.g. "", "Catalog_2009-06-23_14-12-56.xml")<br/>
+	New Remote File: <input type="text" name="NewRemoteFile" value="${!empty(pdict.CurrentHttpParameterMap.NewRemoteFile.stringValue)?pdict.CurrentHttpParameterMap.NewRemoteFile.stringValue:""}"/> (e.g. "Catalog_2009-06-23_14-12-56.xml")<br/>
+	Remote Login: <input type="text" name="RemoteLogin" value="${!empty(pdict.CurrentHttpParameterMap.RemoteLogin.stringValue)?pdict.CurrentHttpParameterMap.RemoteLogin.stringValue:""}"/> (e.g. "dwserver")<br/>
+	Remote Password: <input type="text" name="RemotePassword" value="${!empty(pdict.CurrentHttpParameterMap.RemotePassword.stringValue)?pdict.CurrentHttpParameterMap.RemotePassword.stringValue:""}"/> (e.g. "topsecret")<br/>
+	Local File: <input type="text" name="File" value="${!empty(pdict.CurrentHttpParameterMap.File.stringValue)?pdict.CurrentHttpParameterMap.File.stringValue:""}"/> (e.g. "catalog/Catalog_2009-06-23_14-12-56.xml")<br/>
+	<input type="submit" name="Action" value="REMOTELIST"/>
+	<input type="submit" name="Action" value="GETFILEINFO"/>
+	<input type="submit" name="Action" value="GET"/>
+	<input type="submit" name="Action" value="PUT"/>
+	<input type="submit" name="Action" value="RENAME"/>
+	<input type="submit" name="Action" value="DEL"/><br/>
+	<br/>
+	Local Folder: <input type="text" name="TempFolder" value="${!empty(pdict.CurrentHttpParameterMap.TempFolder.stringValue)?pdict.CurrentHttpParameterMap.TempFolder.stringValue:""}"/> (e.g. "", "catalog")<br/>
+	<input type="submit" name="Action" value="LIST"/><br/>
+	<br/>
+	
+	<isscript>
+		importPackage( dw.io );
+		importPackage( dw.net );
+		importPackage( dw.util );
+	
+		var action = pdict.CurrentHttpParameterMap.Action.stringValue;
+		var remoteFolderURL = pdict.CurrentHttpParameterMap.RemoteFolderURL.stringValue;
+		var remoteFile = pdict.CurrentHttpParameterMap.RemoteFile.stringValue;
+		var newRemoteFile = pdict.CurrentHttpParameterMap.NewRemoteFile.stringValue;
+		var remoteLogin = pdict.CurrentHttpParameterMap.RemoteLogin.stringValue;
+		var remotePassword = pdict.CurrentHttpParameterMap.RemotePassword.stringValue;
+		var file = pdict.CurrentHttpParameterMap.File.stringValue;
+		var tempFolder = pdict.CurrentHttpParameterMap.TempFolder.stringValue;
+		
+		if ( action == "REMOTELIST" )
+		{
+			remoteList( remoteFolderURL, remoteLogin, remotePassword );
+		}
+		if ( action == "GETFILEINFO" )
+		{
+			getFileInfo( remoteFolderURL, remoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "GET" )
+		{
+			get( remoteFolderURL, remoteFile, remoteLogin, remotePassword, file );
+		}
+		else if (action == "PUT" )
+		{
+			put( file, remoteFolderURL, remoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "RENAME" )
+		{
+			rename( remoteFolderURL, remoteFile, newRemoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "DEL" )
+		{
+			del( remoteFolderURL, remoteFile, remoteLogin, remotePassword );
+		}
+		else if (action == "LIST" )
+		{
+			list( tempFolder );
+		}
+
+		function remoteList( remoteFolderURL, remoteLogin, remotePassword)
+		{
+		    // parse URL, e.g. "sftp://sftp.myserver.com:22/folder/"
+			var params = /^sftp:\/\/([^\/:]+)(?::(\d+))?(\/(?:.*\/)?)$/.exec( remoteFolderURL );
+		
+			if ( params == null || params.length != 4 )
+			{
+		    	out.print( "Parameter RemoteFolderURL not recognized, RemoteFolderURL: " + remoteFolderURL + "<br/>");
+		    	return;
+			}
+		
+			var host = params[1];
+			var port = null;
+			// params[2] is undefined if there was no port provided
+			if ( params[2] != undefined )
+			{
+				port = new Number( params[2] );
+			}
+			var path = params[3];
+			
+			var sftpClient = new SFTPClient();
+			var result;
+			
+			try
+			{
+				if ( port != null )
+				{
+					out.print( "Executing sftpClient.connect( \"" + host + "\", " + port + ", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, port, remoteLogin, remotePassword );
+				}
+				else
+				{
+					// use default port
+					out.print( "Executing sftpClient.connect( \"" + host + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, remoteLogin, remotePassword );
+				}
+			}
+			catch ( ex )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			// list files
+			var files;
+			
+			try
+			{
+				out.print( "Executing sftpClient.list( \"" + path + "\" )<br/>" );
+				files = sftpClient.list( path );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while listing " + path + ": " + ex + "<br/>" );		
+				return;
+			}
+			
+			if ( files == null )
+			{
+				out.print( "Error while listing " + path + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			out.print( "Executing sftpClient.disconnect()<br/>" );
+			sftpClient.disconnect();
+
+			out.print( "<br/>" );
+			out.print( "name, isDirectory, size, modificationTime<br/>" );
+			
+			for each ( var file in files )
+			{
+				out.print(
+					file.name + ", " +
+					file.directory + ", " +
+					file.size + ", " +
+					file.modificationTime + "<br/>" );
+			}
+			
+			out.print( "done<br/>" );
+		}
+
+		function getFileInfo( remoteFolderURL, remoteFile, remoteLogin, remotePassword )
+		{
+		    // parse URL, e.g. "sftp://sftp.myserver.com:22/folder/"
+			var params = /^sftp:\/\/([^\/:]+)(?::(\d+))?(\/(?:.*\/)?)$/.exec( remoteFolderURL );
+		
+			if ( params == null || params.length != 4 )
+			{
+		    	out.print( "Parameter RemoteFolderURL not recognized, RemoteFolderURL: " + remoteFolderURL + "<br/>");
+		    	return;
+			}
+		
+			var host = params[1];
+			var port = null;
+			// params[2] is undefined if there was no port provided
+			if ( params[2] != undefined )
+			{
+				port = new Number( params[2] );
+			}
+			var path = params[3];
+			
+			var sftpClient = new SFTPClient();
+			var result;
+			
+			try
+			{
+				if ( port != null )
+				{
+					out.print( "Executing sftpClient.connect( \"" + host + "\", " + port + ", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, port, remoteLogin, remotePassword );
+				}
+				else
+				{
+					// use default port
+					out.print( "Executing sftpClient.connect( \"" + host + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, remoteLogin, remotePassword );
+				}
+			}
+			catch ( ex )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			var fileInfo;
+			
+			try
+			{
+				out.print( "Executing sftpClient.getFileInfo( \"" + path + remoteFile + "\" )<br/>" );
+				fileInfo = sftpClient.getFileInfo( path + remoteFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while retrieving file info " + path + remoteFile + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( fileInfo == null )
+			{
+				out.print( "Error while retrieving file info  " + path + remoteFile + ": " + 
+					sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+		
+			out.print( "Executing sftpClient.disconnect()<br/>" );
+			sftpClient.disconnect();
+
+			out.print( "<br/>" );
+			out.print( "name, isDirectory, size, modificationTime<br/>" );
+			
+			out.print(
+				fileInfo.name + ", " +
+				fileInfo.directory + ", " +
+				fileInfo.size + ", " +
+				fileInfo.modificationTime + "<br/>" );
+			
+			out.print( "done<br/>" );
+		}
+		
+		function get( remoteFolderURL, remoteFile, remoteLogin, remotePassword, file )
+		{
+		    // parse URL, e.g. "sftp://sftp.myserver.com:22/folder/"
+			var params = /^sftp:\/\/([^\/:]+)(?::(\d+))?(\/(?:.*\/)?)$/.exec( remoteFolderURL );
+		
+			if ( params == null || params.length != 4 )
+			{
+		    	out.print( "Parameter RemoteFolderURL not recognized, RemoteFolderURL: " + remoteFolderURL + "<br/>");
+		    	return;
+			}
+		
+			var host = params[1];
+			var port = null;
+			// params[2] is undefined if there was no port provided
+			if ( params[2] != undefined )
+			{
+				port = new Number( params[2] );
+			}
+			var path = params[3];
+			
+			var sftpClient = new SFTPClient();
+			var result;
+			
+			try
+			{
+				if ( port != null )
+				{
+					out.print( "Executing sftpClient.connect( \"" + host + "\", " + port + ", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, port, remoteLogin, remotePassword );
+				}
+				else
+				{
+					// use default port
+					out.print( "Executing sftpClient.connect( \"" + host + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, remoteLogin, remotePassword );
+				}
+			}
+			catch ( ex )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			// download file
+			var localFile = new File( File.IMPEX + File.SEPARATOR + "src" + File.SEPARATOR + file );
+
+			var result;
+
+			try
+			{
+				out.print( "Executing sftpClient.getBinary( \"" + path + remoteFile + "\", " + localFile.fullPath + " )<br/>" );
+				result = sftpClient.getBinary( path + remoteFile, localFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while downloading " + path + remoteFile + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while downloading  " + path + remoteFile + ": " + 
+					sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+		
+			out.print( "Executing sftpClient.disconnect()<br/>" );
+			sftpClient.disconnect();
+			
+			out.print( "done<br/>" );
+		}
+
+		function put( file, remoteFolderURL, remoteFile, remoteLogin, remotePassword )
+		{
+			var localFile = new File( File.IMPEX + File.SEPARATOR + "src" + File.SEPARATOR + file );
+		
+			if ( !localFile.exists() )
+			{
+		    	out.print( "File " + localFile.fullPath + " does not exist.<br/>" );
+		    	return;
+			}
+
+		    // parse URL, e.g. "sftp://sftp.myserver.com:22/folder/"
+			var params = /^sftp:\/\/([^\/:]+)(?::(\d+))?(\/(?:.*\/)?)$/.exec( remoteFolderURL );
+		
+			if ( params == null || params.length != 4 )
+			{
+		    	out.print( "Parameter RemoteFolderURL not recognized, RemoteFolderURL: " + remoteFolderURL + "<br/>");
+		    	return;
+			}
+		
+			var host = params[1];
+			var port = null;
+			// params[2] is undefined if there was no port provided
+			if ( params[2] != undefined )
+			{
+				port = new Number( params[2] );
+			}
+			var path = params[3];
+			
+			var sftpClient = new SFTPClient();
+			var result;
+			
+			try
+			{
+				if ( port != null )
+				{
+					out.print( "Executing sftpClient.connect( \"" + host + "\", " + port + ", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, port, remoteLogin, remotePassword );
+				}
+				else
+				{
+					// use default port
+					out.print( "Executing sftpClient.connect( \"" + host + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, remoteLogin, remotePassword );
+				}
+			}
+			catch ( ex )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			var result;
+
+			try
+			{
+				out.print( "Executing sftpClient.putBinary( \"" + path + remoteFile + "\", " + localFile.fullPath + " )<br/>" );
+				result = sftpClient.putBinary( path + remoteFile, localFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while uploading " + path + remoteFile + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while uploading  " + path + remoteFile + ": " + 
+					sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+		
+			out.print( "Executing sftpClient.disconnect()<br/>" );
+			sftpClient.disconnect();
+			
+			out.print( "done<br/>" );
+		}
+
+		function rename( remoteFolderURL, remoteFile, newRemoteFile, remoteLogin, remotePassword)
+		{
+		    // parse URL, e.g. "sftp://sftp.myserver.com:22/folder/"
+			var params = /^sftp:\/\/([^\/:]+)(?::(\d+))?(\/(?:.*\/)?)$/.exec( remoteFolderURL );
+		
+			if ( params == null || params.length != 4 )
+			{
+		    	out.print( "Parameter RemoteFolderURL not recognized, RemoteFolderURL: " + remoteFolderURL + "<br/>");
+		    	return;
+			}
+		
+			var host = params[1];
+			var port = null;
+			// params[2] is undefined if there was no port provided
+			if ( params[2] != undefined )
+			{
+				port = new Number( params[2] );
+			}
+			var path = params[3];
+			
+			var sftpClient = new SFTPClient();
+			var result;
+			
+			try
+			{
+				if ( port != null )
+				{
+					out.print( "Executing sftpClient.connect( \"" + host + "\", " + port + ", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, port, remoteLogin, remotePassword );
+				}
+				else
+				{
+					// use default port
+					out.print( "Executing sftpClient.connect( \"" + host + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, remoteLogin, remotePassword );
+				}
+			}
+			catch ( ex )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			var result;
+
+			try
+			{
+				out.print( "Executing sftpClient.rename( \"" + path + remoteFile + "\", \"" + path + newRemoteFile + "\" )<br/>" );
+				result = sftpClient.rename( path + remoteFile, path + newRemoteFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while renaming: " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while renaming: " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+		
+			out.print( "Executing sftpClient.disconnect()<br/>" );
+			sftpClient.disconnect();
+			
+			out.print( "done<br/>" );
+		}
+		
+		function del( remoteFolderURL, remoteFile, remoteLogin, remotePassword)
+		{
+		    // parse URL, e.g. "sftp://sftp.myserver.com:22/folder/"
+			var params = /^sftp:\/\/([^\/:]+)(?::(\d+))?(\/(?:.*\/)?)$/.exec( remoteFolderURL );
+		
+			if ( params == null || params.length != 4 )
+			{
+		    	out.print( "Parameter RemoteFolderURL not recognized, RemoteFolderURL: " + remoteFolderURL + "<br/>");
+		    	return;
+			}
+		
+			var host = params[1];
+			var port = null;
+			// params[2] is undefined if there was no port provided
+			if ( params[2] != undefined )
+			{
+				port = new Number( params[2] );
+			}
+			var path = params[3];
+			
+			var sftpClient = new SFTPClient();
+			var result;
+			
+			try
+			{
+				if ( port != null )
+				{
+					out.print( "Executing sftpClient.connect( \"" + host + "\", " + port + ", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, port, remoteLogin, remotePassword );
+				}
+				else
+				{
+					// use default port
+					out.print( "Executing sftpClient.connect( \"" + host + "\", \"" + remoteLogin + "\", \"" + remotePassword + "\" )<br/>" );
+					result = sftpClient.connect( host, remoteLogin, remotePassword );
+				}
+			}
+			catch ( ex )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while connecting to " + 
+					host + ( ( port != null ) ? ( ":" + port ) : "" ) + ": " + sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+
+			var result;
+
+			try
+			{
+				out.print( "Executing sftpClient.del( \"" + path + remoteFile + "\" )<br/>" );
+				result = sftpClient.del( path + remoteFile );
+			}
+			catch ( ex )
+			{
+				out.print( "Error while deleting " + path + remoteFile + ": " + ex + "<br/>" );		
+				return;
+			}
+		
+			if ( !result )
+			{
+				out.print( "Error while deleting  " + path + remoteFile + ": " + 
+					sftpClient.errorMessage + "<br/>" );		
+				return;
+			}
+		
+			out.print( "Executing sftpClient.disconnect()<br/>" );
+			sftpClient.disconnect();
+			
+			out.print( "done<br/>" );
+		}
+		
+		function list( tempFolder )
+		{
+			var folder;
+			
+			if ( !empty( tempFolder ) )
+			{
+				folder = new File( File.IMPEX + File.SEPARATOR + "src" + File.SEPARATOR + tempFolder );
+			}
+			else
+			{
+				folder = new File( File.IMPEX + File.SEPARATOR + "src" );
+			}
+		
+			if ( !folder.exists() )
+			{
+				out.print( "Folder " + folder.fullPath + " does not exist.<br/>" );
+				return;
+			} 
+			
+			if ( !folder.directory )
+			{
+				out.print( "Folder " + folder.fullPath + " is not of type directory.<br/>" );
+				return;
+			} 
+			
+			out.print( "name, fullPath, rootDirectoryType, file, directory, lastModified, length<br/>" );
+			
+			for each ( var file in folder.listFiles() )
+			{
+				var calendar : Calendar = new Calendar( new Date( file.lastModified() ) );
+				calendar.timeZone = "GMT";
+			
+				out.print(
+					file.name + ", " +
+					file.fullPath + ", " +
+					file.rootDirectoryType + ", " +
+					file.file + ", " +
+					file.directory + ", " +
+					StringUtils.formatCalendar( calendar, "yyyy-MM-dd HH:mm:ss" ) + " GMT, " +
+					file.length() + "<br/>" );
+			}
+		
+			out.print( "done<br/>" );
+		}
+	</isscript>
+	
+	</form>	
+</body>
+</html>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<form>
+    <field formid="fname" label="forms.contactus.firstname.label" type="boolean"  binding="custom.firstName"/>
+	<field formid="fname" label="forms.contactus.firstname.label" type="boolean"  binding="custom.firstName"/>	
+	<field formid="fname" label="forms.contactus.firstname.label" type="boolean"  binding="custom.firstName"/>
+	
+	
+	<action formid="subscribe" valid-form="true"/>
+</form>
